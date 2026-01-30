@@ -1,0 +1,22 @@
+{
+  "devices": [
+    {
+      "device": "AA:BB:CC:DD:EE:FF",
+      "model": "H6008"
+    }
+  ],
+  "poll_interval_seconds": 60,
+  "log_level": "INFO",
+  "test_blink_all": false,
+  "test_blink_times": 1,
+  "test_blink_delay_seconds": 60,
+  "test_sync_state": "on",
+  "schedule": [
+    {"time": "06:00", "brightness": 10, "color_temp_k": 2200},
+    {"time": "08:00", "brightness": 40, "color_temp_k": 3000},
+    {"time": "12:00", "brightness": 80, "color_temp_k": 5000},
+    {"time": "16:00", "brightness": 60, "color_temp_k": 4000},
+    {"time": "20:00", "brightness": 20, "color_temp_k": 2700},
+    {"time": "22:30", "brightness": 5, "color_temp_k": 2200}
+  ]
+}
