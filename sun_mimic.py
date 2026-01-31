@@ -146,17 +146,68 @@ def get_allowed_ssids(env_path: Path) -> List[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
-def get_current_ssid() -> str:
-    airport = "/System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport"
+def get_probe_ips(env_path: Path) -> List[str]:
+    env_data = load_env(env_path)
+    raw = env_data.get("PROBE_IPS") or os.environ.get("PROBE_IPS", "")
+    if not raw:
+        return []
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def get_probe_timeout_ms(env_path: Path) -> int:
+    env_data = load_env(env_path)
+    raw = env_data.get("PROBE_TIMEOUT_MS") or os.environ.get("PROBE_TIMEOUT_MS", "")
+    if not raw:
+        return 1000
     try:
-        output = subprocess.check_output([airport, "-I"], text=True).splitlines()
+        return max(200, int(raw))
+    except ValueError:
+        return 1000
+
+
+def probe_ips_reachable(ips: List[str], timeout_ms: int) -> bool:
+    if not ips:
+        return True
+    for ip in ips:
+        try:
+            result = subprocess.run(
+                ["/sbin/ping", "-n", "-c", "1", ip],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=timeout_ms / 1000.0,
+                check=False,
+            )
+            if result.returncode == 0:
+                return True
+        except subprocess.TimeoutExpired:
+            continue
+    return False
+
+def get_current_ssid() -> str:
+    try:
+        ports = subprocess.check_output(["networksetup", "-listallhardwareports"], text=True)
     except Exception:
         return ""
-    for line in output:
-        line = line.strip()
-        if line.startswith("SSID:"):
-            return line.split("SSID:", 1)[-1].strip()
-    return ""
+
+    device = ""
+    for block in ports.split("\n\n"):
+        if "Hardware Port: Wi-Fi" in block:
+            for line in block.splitlines():
+                line = line.strip()
+                if line.startswith("Device:"):
+                    device = line.split(":", 1)[-1].strip()
+                    break
+    if not device:
+        return ""
+
+    try:
+        output = subprocess.check_output(["networksetup", "-getairportnetwork", device], text=True)
+    except Exception:
+        return ""
+
+    if ":" not in output:
+        return ""
+    return output.split(":", 1)[-1].strip()
 
 
 def device_matches(target: Dict[str, str], device: Any) -> bool:
@@ -499,6 +550,9 @@ def main() -> None:
     api_key = get_api_key(env_path)
     allowed_ssids = get_allowed_ssids(env_path)
     current_ssid = get_current_ssid()
+    probe_ips = get_probe_ips(env_path)
+    probe_timeout_ms = get_probe_timeout_ms(env_path)
+    probe_ok = probe_ips_reachable(probe_ips, probe_timeout_ms)
 
     config = load_config(config_path)
     setup_logging(config.get("log_level", DEFAULT_LOG_LEVEL))
@@ -509,8 +563,13 @@ def main() -> None:
             return
         if args.status:
             print(f"ssid={current_ssid or 'unknown'} allowed={','.join(allowed_ssids) or 'any'}")
+            if probe_ips:
+                print(f"probe_ips={','.join(probe_ips)} probe_ok={probe_ok}")
             if allowed_ssids and current_ssid not in allowed_ssids:
                 print("ssid not allowed; skipping API calls")
+                return
+            if probe_ips and not probe_ok:
+                print("probe not reachable; skipping API calls")
                 return
             asyncio.run(list_states(api_key, config))
             return
@@ -519,6 +578,9 @@ def main() -> None:
                 "Current SSID '%s' not in allowed list. Exiting without API calls.",
                 current_ssid or "unknown",
             )
+            return
+        if probe_ips and not probe_ok:
+            logging.warning("Probe IPs not reachable. Exiting without API calls.")
             return
         if args.sync_state:
             asyncio.run(

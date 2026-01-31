@@ -61,6 +61,18 @@ ALLOWED_SSID=GOVEE-DEVICE-SSID
 
 When set, the app will skip API calls if you're not on that SSID. `--status` will show the current SSID.
 
+7) Optional: restrict to specific local IPs (work-only devices)
+
+Add one or more IPs to `.env`:
+
+```
+PROBE_IPS=GOVEE-DEVICE-IP1,GOVEE-DEVICE-IP2
+PROBE_TIMEOUT_MS=1000
+```
+
+When set, the app will skip API calls unless at least one IP responds to ping.
+These can be any work-only devices (e.g., a VoIP server), not necessarily Govee devices.
+
 ## Config
 
 `config.json` fields:
