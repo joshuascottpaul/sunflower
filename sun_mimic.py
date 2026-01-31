@@ -21,6 +21,7 @@ LOG_DIR = Path.home() / "Library" / "Logs" / "sunflower"
 DEFAULT_CONFIG_PATH = Path(__file__).parent / "config.json"
 DEFAULT_POLL_SECONDS = 60
 DEFAULT_LOG_LEVEL = "INFO"
+DEFAULT_COMMAND_DELAY_SECONDS = 10
 
 
 @dataclass
@@ -337,6 +338,7 @@ async def apply_schedule(
     schedule = build_schedule(config.get("schedule", []))
     poll_interval = int(config.get("poll_interval_seconds", DEFAULT_POLL_SECONDS))
     config_devices = config.get("devices", [])
+    command_delay = int(config.get("command_delay_seconds", DEFAULT_COMMAND_DELAY_SECONDS))
     test_blink_all = bool(config.get("test_blink_all", False))
     test_blink_times = int(config.get("test_blink_times", 1))
     test_blink_delay = int(config.get("test_blink_delay_seconds", 60))
@@ -394,8 +396,11 @@ async def apply_schedule(
             )
             for device in selected:
                 await retry_call(hub, hub.turn_on, device, context="turn_on")
+                await asyncio.sleep(command_delay)
                 await retry_call(hub, hub.set_color_temp, device, color_temp_k, context="set_color_temp")
+                await asyncio.sleep(command_delay)
                 await retry_call(hub, hub.set_brightness, device, brightness, context="set_brightness")
+                await asyncio.sleep(command_delay)
             if once:
                 return
             await asyncio.sleep(poll_interval)

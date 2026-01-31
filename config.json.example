@@ -6,6 +6,7 @@
     }
   ],
   "poll_interval_seconds": 60,
+  "command_delay_seconds": 10,
   "log_level": "INFO",
   "test_blink_all": false,
   "test_blink_times": 1,

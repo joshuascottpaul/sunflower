@@ -29,6 +29,7 @@ cp config.json.example config.json
 `config.json` fields:
 - `devices`: list of `{ "device": "MAC", "model": "H6008" }`. If empty, all devices are targeted.
 - `poll_interval_seconds`: how often to apply the schedule.
+- `command_delay_seconds`: delay between API commands to reduce rate limits.
 - `log_level`: `DEBUG`, `INFO`, `WARNING`, or `ERROR`.
 - `test_blink_all`: when `true`, `--test` blinks all devices (may hit rate limits).
 - `test_blink_times`: number of on/off cycles for `--test` (default 1).
@@ -85,6 +86,18 @@ python3 sun_mimic.py --install-service
 
 This installs a `launchd` agent that runs in the background and restarts automatically.
 It uses a wrapper script that loads `.env` so your API key is available.
+
+## Troubleshooting
+
+- Service won’t start on Desktop: move the repo to a non-protected path like `/Users/you/Applications/sunflower` and reinstall the service.
+- Missing dependency in logs: recreate the venv and reinstall dependencies.
+  - `python3 -m venv .venv`
+  - `. .venv/bin/activate`
+  - `pip install -r requirements.txt`
+- View logs:
+  - `tail -n 50 ~/Library/Logs/sunflower/sun_mimic.launchd.log`
+  - `tail -n 50 ~/Library/Logs/sunflower/sun_mimic.launchd.err`
+- Hitting 429s: increase `command_delay_seconds` and/or `poll_interval_seconds`.
 
 ## Logs
 
