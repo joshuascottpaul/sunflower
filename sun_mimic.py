@@ -551,7 +551,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--install-service",
         action="store_true",
-        help="Install launchd service (restart with launchctl bootout/bootstrap)",
+        help=(
+            "Install launchd service (restart: launchctl bootout gui/$(id -u) "
+            "~/Library/LaunchAgents/com.joshuascottpaul.sunflower.plist && "
+            "launchctl bootstrap gui/$(id -u) "
+            "~/Library/LaunchAgents/com.joshuascottpaul.sunflower.plist)"
+        ),
     )
     parser.add_argument("--uninstall-service", action="store_true", help="Uninstall launchd service")
     return parser.parse_args()
