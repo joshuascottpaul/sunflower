@@ -541,7 +541,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--status",
         action="store_true",
-        help="Show current SSID and device states (power, brightness, color temp) and exit",
+        help="Show probe/IP gating status and device states (power, brightness, color temp) and exit",
     )
     parser.add_argument("--test", action="store_true", help="Log the next scheduled values without applying")
     parser.add_argument("--test-device", help="Only test a single device ID")
