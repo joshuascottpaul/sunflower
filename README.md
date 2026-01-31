@@ -51,6 +51,16 @@ python3 sun_mimic.py --list-devices
 python3 sun_mimic.py --test --test-device YOUR_DEVICE_ID --no-test-sync
 ```
 
+6) Optional: restrict to a specific Wi-Fi SSID
+
+Add your SSID to `.env`:
+
+```
+ALLOWED_SSID=GOVEE-DEVICE-SSID
+```
+
+When set, the app will skip API calls if you're not on that SSID. `--status` will show the current SSID.
+
 ## Config
 
 `config.json` fields:

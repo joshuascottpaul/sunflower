@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import sys
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -135,6 +136,27 @@ def get_api_key(env_path: Path) -> str:
     if not api_key:
         raise RuntimeError("Missing GOVEE_API_KEY in .env or environment")
     return api_key
+
+
+def get_allowed_ssids(env_path: Path) -> List[str]:
+    env_data = load_env(env_path)
+    raw = env_data.get("ALLOWED_SSID") or os.environ.get("ALLOWED_SSID", "")
+    if not raw:
+        return []
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def get_current_ssid() -> str:
+    airport = "/System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport"
+    try:
+        output = subprocess.check_output([airport, "-I"], text=True).splitlines()
+    except Exception:
+        return ""
+    for line in output:
+        line = line.strip()
+        if line.startswith("SSID:"):
+            return line.split("SSID:", 1)[-1].strip()
+    return ""
 
 
 def device_matches(target: Dict[str, str], device: Any) -> bool:
@@ -454,7 +476,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--status",
         action="store_true",
-        help="Show current device states (power, brightness, color temp) and exit",
+        help="Show current SSID and device states (power, brightness, color temp) and exit",
     )
     parser.add_argument("--test", action="store_true", help="Log the next scheduled values without applying")
     parser.add_argument("--test-device", help="Only test a single device ID")
@@ -475,6 +497,8 @@ def main() -> None:
 
     env_path = Path(__file__).parent / ".env"
     api_key = get_api_key(env_path)
+    allowed_ssids = get_allowed_ssids(env_path)
+    current_ssid = get_current_ssid()
 
     config = load_config(config_path)
     setup_logging(config.get("log_level", DEFAULT_LOG_LEVEL))
@@ -484,7 +508,17 @@ def main() -> None:
             asyncio.run(list_devices(api_key))
             return
         if args.status:
+            print(f"ssid={current_ssid or 'unknown'} allowed={','.join(allowed_ssids) or 'any'}")
+            if allowed_ssids and current_ssid not in allowed_ssids:
+                print("ssid not allowed; skipping API calls")
+                return
             asyncio.run(list_states(api_key, config))
+            return
+        if allowed_ssids and current_ssid not in allowed_ssids:
+            logging.warning(
+                "Current SSID '%s' not in allowed list. Exiting without API calls.",
+                current_ssid or "unknown",
+            )
             return
         if args.sync_state:
             asyncio.run(
