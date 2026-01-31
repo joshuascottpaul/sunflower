@@ -6,10 +6,8 @@
   <string>com.joshuascottpaul.sunflower</string>
   <key>ProgramArguments</key>
   <array>
-    <string>{{PYTHON_BIN}}</string>
-    <string>{{REPO_DIR}}/sun_mimic.py</string>
-    <string>--config</string>
-    <string>{{REPO_DIR}}/config.json</string>
+    <string>/bin/sh</string>
+    <string>{{REPO_DIR}}/scripts/run_sun_mimic.sh</string>
   </array>
   <key>WorkingDirectory</key>
   <string>{{REPO_DIR}}</string>

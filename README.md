@@ -18,7 +18,11 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-3) Edit `config.json` with your device and schedule.
+3) Copy and edit `config.json` with your device and schedule.
+
+```
+cp config.json.example config.json
+```
 
 ## Config
 
@@ -80,6 +84,7 @@ python3 sun_mimic.py --install-service
 ```
 
 This installs a `launchd` agent that runs in the background and restarts automatically.
+It uses a wrapper script that loads `.env` so your API key is available.
 
 ## Logs
 
