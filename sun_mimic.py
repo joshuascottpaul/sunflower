@@ -169,18 +169,17 @@ def is_rate_limit_error(message: str) -> bool:
 
 
 def parse_rate_limit_seconds(message: str) -> Optional[int]:
+    import re
+
     lowered = message.lower()
-    if "retry in" in lowered:
-        parts = lowered.split("retry in", 1)[-1].strip()
-        number = ""
-        for char in parts:
-            if char.isdigit():
-                number += char
-            elif number:
-                break
-        if number:
-            return max(1, int(number))
-    return None
+    match = re.search(r"retry in\\s+([\\d.]+)\\s*(ms|s|sec|secs|seconds)?", lowered)
+    if not match:
+        return None
+    value = float(match.group(1))
+    unit = match.group(2) or "s"
+    if unit == "ms":
+        return max(1, int((value + 999) // 1000))
+    return max(1, int(round(value)))
 
 
 def rate_limit_wait_seconds(hub: Govee, message: Optional[str] = None, default_seconds: int = 60) -> int:
@@ -198,6 +197,8 @@ def rate_limit_wait_seconds(hub: Govee, message: Optional[str] = None, default_s
                     wait_seconds = max(1, int(reset_at - datetime.now().timestamp()))
                 except Exception:
                     wait_seconds = None
+        if wait_seconds is not None and wait_seconds < 5:
+            wait_seconds = default_seconds
     if wait_seconds is None:
         wait_seconds = default_seconds
     return max(1, wait_seconds)
