@@ -1,6 +1,6 @@
 # Sunflower
 
-Make Govee LED mimic the sun.
+Sun Mimic adjusts Govee bulb brightness and color temperature over the day to follow a sunrise-to-sunset schedule.
 
 ## Setup (new users)
 
@@ -131,6 +131,24 @@ Run continuously:
 python3 sun_mimic.py
 ```
 
+Command line quickstart:
+
+```
+cd /Users/<user>/Applications/sunflower
+# or: cd /path/to/sunflower
+. .venv/bin/activate
+python3 sun_mimic.py
+```
+
+Common commands:
+- One-shot apply: `python3 sun_mimic.py --once`
+- Status: `python3 sun_mimic.py --status`
+- List devices: `python3 sun_mimic.py --list-devices`
+- Test a device: `python3 sun_mimic.py --test --test-device <DEVICE_ID> --no-test-sync`
+- Install service: `python3 sun_mimic.py --install-service`
+
+If you want a one-liner, tell me and I'll format it.
+
 ## launchd (run in background)
 
 Install the macOS service (requires the repo not on Desktop):
@@ -142,12 +160,25 @@ python3 sun_mimic.py --install-service
 This installs a `launchd` agent that runs in the background and restarts automatically.
 It uses a wrapper script that loads `.env` so your API key is available.
 
+Uninstall the service:
+
+```
+python3 sun_mimic.py --uninstall-service
+```
+
 Verify the service is running:
 
 ```
 launchctl print gui/$(id -u)/com.joshuascottpaul.sunflower
 tail -n 50 ~/Library/Logs/sunflower/sun_mimic.launchd.log
 tail -n 50 ~/Library/Logs/sunflower/sun_mimic.launchd.err
+```
+
+Restart the service:
+
+```
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.joshuascottpaul.sunflower.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.joshuascottpaul.sunflower.plist
 ```
 
 ## Troubleshooting

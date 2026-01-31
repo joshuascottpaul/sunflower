@@ -520,8 +520,22 @@ def install_service() -> None:
     subprocess.run(["/bin/sh", str(script_path)], check=True)
 
 
+def uninstall_service() -> None:
+    import subprocess
+
+    plist_path = Path.home() / "Library" / "LaunchAgents" / "com.joshuascottpaul.sunflower.plist"
+    if not plist_path.exists():
+        print("Service not installed.")
+        return
+    subprocess.run(["launchctl", "bootout", f"gui/{os.getuid()}", str(plist_path)], check=False)
+    plist_path.unlink(missing_ok=True)
+    print(f"Uninstalled {plist_path}")
+
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Sun Mimic - circadian lighting control")
+    parser = argparse.ArgumentParser(
+        description="Sun Mimic - adjust brightness and color temperature over the day to mimic sunrise/sunset"
+    )
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="Path to config.json")
     parser.add_argument("--list-devices", action="store_true", help="List devices and exit")
     parser.add_argument(
@@ -534,7 +548,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-test-sync", action="store_true", help="Skip pre-test sync state")
     parser.add_argument("--once", action="store_true", help="Apply the schedule once and exit")
     parser.add_argument("--sync-state", choices=["on", "off"], help="Sync all devices to on/off and exit")
-    parser.add_argument("--install-service", action="store_true", help="Install launchd service")
+    parser.add_argument(
+        "--install-service",
+        action="store_true",
+        help="Install launchd service (restart with launchctl bootout/bootstrap)",
+    )
+    parser.add_argument("--uninstall-service", action="store_true", help="Uninstall launchd service")
     return parser.parse_args()
 
 
@@ -544,6 +563,9 @@ def main() -> None:
 
     if args.install_service:
         install_service()
+        return
+    if args.uninstall_service:
+        uninstall_service()
         return
 
     env_path = Path(__file__).parent / ".env"
