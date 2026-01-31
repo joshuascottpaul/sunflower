@@ -73,6 +73,12 @@ List devices:
 python3 sun_mimic.py --list-devices
 ```
 
+Show current device states:
+
+```
+python3 sun_mimic.py --status
+```
+
 Test (blink devices 5 times to confirm connectivity):
 
 ```

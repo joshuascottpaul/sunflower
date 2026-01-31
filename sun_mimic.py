@@ -258,6 +258,36 @@ async def list_devices(api_key: str) -> None:
         await hub.close()
 
 
+async def list_states(api_key: str, config: Dict[str, Any]) -> None:
+    config_devices = config.get("devices", [])
+    hub = await Govee.create(api_key, learning_storage=GoveeNoLearningStorage())
+    try:
+        devices, err = await hub.get_devices()
+        if err:
+            await handle_api_error(hub, err, "get_devices")
+        selected = select_devices(config_devices, devices or [])
+        selected_ids = {getattr(d, "device", "") for d in selected}
+        states = await hub.get_states()
+        for state in states or []:
+            if selected_ids and getattr(state, "device", "") not in selected_ids:
+                continue
+            print(
+                "device={device} model={model} online={online} power={power} "
+                "brightness={brightness} color_temp_k={color_temp} color={color} error={error}".format(
+                    device=getattr(state, "device", ""),
+                    model=getattr(state, "model", ""),
+                    online=getattr(state, "online", ""),
+                    power=getattr(state, "power_state", ""),
+                    brightness=getattr(state, "brightness", ""),
+                    color_temp=getattr(state, "color_temp", ""),
+                    color=getattr(state, "color", ""),
+                    error=getattr(state, "error", ""),
+                )
+            )
+    finally:
+        await hub.close()
+
+
 async def blink_devices(
     hub: Govee,
     devices: List[Any],
@@ -421,6 +451,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Sun Mimic - circadian lighting control")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="Path to config.json")
     parser.add_argument("--list-devices", action="store_true", help="List devices and exit")
+    parser.add_argument(
+        "--status",
+        action="store_true",
+        help="Show current device states (power, brightness, color temp) and exit",
+    )
     parser.add_argument("--test", action="store_true", help="Log the next scheduled values without applying")
     parser.add_argument("--test-device", help="Only test a single device ID")
     parser.add_argument("--no-test-sync", action="store_true", help="Skip pre-test sync state")
@@ -447,6 +482,9 @@ def main() -> None:
     try:
         if args.list_devices:
             asyncio.run(list_devices(api_key))
+            return
+        if args.status:
+            asyncio.run(list_states(api_key, config))
             return
         if args.sync_state:
             asyncio.run(
