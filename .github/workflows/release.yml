@@ -1,0 +1,70 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Create packages
+      run: |
+        chmod +x package.sh
+        ./package.sh ${{ steps.version.outputs.VERSION }}
+    
+    - name: Create Release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        REPO_NAME=$(basename "$GITHUB_REPOSITORY")
+        gh release create ${{ steps.version.outputs.VERSION }} \
+          dist/*.tar.gz \
+          --title "${{ steps.version.outputs.VERSION }}" \
+          --notes "Release ${{ steps.version.outputs.VERSION }}
+
+        ## Installation
+
+        ### Using ubi
+        \`\`\`bash
+        ubi --project ${{ github.repository }} --in ~/.local/bin
+        \`\`\`
+
+        ### Using bin
+        \`\`\`bash
+        bin install github.com/${{ github.repository }}
+        \`\`\`
+
+        ### Manual
+        \`\`\`bash
+        # Download for your platform (darwin-arm64 for Apple Silicon Mac)
+        curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/${REPO_NAME}-${{ steps.version.outputs.VERSION }}-darwin-arm64.tar.gz | tar xz
+        cd ${REPO_NAME}-darwin-arm64
+        ./install.sh
+        \`\`\`
+
+        ## Requirements
+        - Python 3.7+
+        - See requirements.txt for Python dependencies
+
+        See [README.md](https://github.com/${{ github.repository }}#readme) for full documentation."
