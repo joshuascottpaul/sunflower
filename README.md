@@ -2,6 +2,37 @@
 
 Sun Mimic adjusts Govee bulb brightness and color temperature over the day to follow a sunrise-to-sunset schedule.
 
+
+## Installation
+
+### Quick Install with Package Managers
+
+**Using [ubi](https://github.com/houseabsolute/ubi):**
+```bash
+ubi --project joshuascottpaul/sunflower --in ~/.local/bin
+```
+
+**Using [bin](https://github.com/marcosnils/bin):**
+```bash
+bin install github.com/joshuascottpaul/sunflower
+```
+
+### Manual Install
+
+```bash
+git clone https://github.com/joshuascottpaul/sunflower.git
+cd sunflower
+pip install -r requirements.txt  # if requirements.txt exists
+```
+
+### From Release
+
+```bash
+curl -L https://github.com/joshuascottpaul/sunflower/releases/latest/download/sunflower-v0.1.0-darwin-arm64.tar.gz | tar xz
+cd sunflower-darwin-arm64
+./install.sh
+```
+
 ## Setup (new users)
 
 Recommended location on macOS (avoids launchd permission issues):
